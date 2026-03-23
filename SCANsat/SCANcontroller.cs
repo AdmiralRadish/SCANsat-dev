@@ -896,6 +896,12 @@ namespace SCANsat
 				finishRegistration(tempIDs[i]);
 			}
 
+			// Re-register any vessels with active scanners that weren't in the
+			// save data (e.g. knownVessels was empty because EC failure caused
+			// unregistration before the last save). Check all vessels' proto-part
+			// modules to find any with scanning = true and re-register them.
+			registerScannersFromAllVessels();
+
 			GameEvents.OnScienceRecieved.Add(watcher);
 			GameEvents.OnOrbitalSurveyCompleted.Add(onSurvey);
 			GameEvents.onVesselSOIChanged.Add(SOIChange);
@@ -2182,6 +2188,87 @@ namespace SCANsat
 					registerSensor(v.id, (SCANtype)s.sensorType, s.fov, s.min_alt, s.max_alt, s.best_alt, s.requireLight);
 				}
 			}
+		}
+
+		private void registerScannersFromAllVessels()
+		{
+			if (FlightGlobals.Vessels == null)
+				return;
+
+			int registered = 0;
+
+			for (int i = FlightGlobals.Vessels.Count - 1; i >= 0; i--)
+			{
+				Vessel v = FlightGlobals.Vessels[i];
+
+				if (v == null || v.vesselType == VesselType.Debris)
+					continue;
+
+				if (isVesselKnown(v))
+					continue;
+
+				// For loaded vessels, use the live part modules
+				if (v.loaded)
+				{
+					foreach (SCANsat.SCAN_PartModules.SCANsat s in v.FindPartModulesImplementing<SCANsat.SCAN_PartModules.SCANsat>())
+					{
+						if (s.scanningNow && s.sensorType > 0)
+						{
+							registerSensor(v, (SCANtype)s.sensorType, s.fov, s.min_alt, s.max_alt, s.best_alt, s.requireLight);
+							registered++;
+						}
+					}
+				}
+				else if (v.protoVessel != null)
+				{
+					// For unloaded vessels, check protopart module values
+					foreach (ProtoPartSnapshot pp in v.protoVessel.protoPartSnapshots)
+					{
+						foreach (ProtoPartModuleSnapshot pm in pp.modules)
+						{
+							if (pm.moduleName != "SCANsat" && pm.moduleName != "ModuleSCANresourceScanner")
+								continue;
+
+							bool isScanning = false;
+							int sensorType = 0;
+							float fov = 3;
+							float min_alt = 5000;
+							float max_alt = 500000;
+							float best_alt = 200000;
+							bool requireLight = false;
+
+							if (pm.moduleValues.HasValue("scanning"))
+								bool.TryParse(pm.moduleValues.GetValue("scanning"), out isScanning);
+
+							if (!isScanning)
+								continue;
+
+							if (pm.moduleValues.HasValue("sensorType"))
+								int.TryParse(pm.moduleValues.GetValue("sensorType"), out sensorType);
+
+							if (sensorType <= 0)
+								continue;
+
+							if (pm.moduleValues.HasValue("fov"))
+								float.TryParse(pm.moduleValues.GetValue("fov"), out fov);
+							if (pm.moduleValues.HasValue("min_alt"))
+								float.TryParse(pm.moduleValues.GetValue("min_alt"), out min_alt);
+							if (pm.moduleValues.HasValue("max_alt"))
+								float.TryParse(pm.moduleValues.GetValue("max_alt"), out max_alt);
+							if (pm.moduleValues.HasValue("best_alt"))
+								float.TryParse(pm.moduleValues.GetValue("best_alt"), out best_alt);
+							if (pm.moduleValues.HasValue("requireLight"))
+								bool.TryParse(pm.moduleValues.GetValue("requireLight"), out requireLight);
+
+							registerSensor(v, (SCANtype)sensorType, fov, min_alt, max_alt, best_alt, requireLight);
+							registered++;
+						}
+					}
+				}
+			}
+
+			if (registered > 0)
+				SCANUtil.SCANlog("Re-registered {0} scanner(s) from vessel inspection", registered);
 		}
 
 		private void dockingEventCheck(GameEvents.FromToAction<Part, Part> Parts)

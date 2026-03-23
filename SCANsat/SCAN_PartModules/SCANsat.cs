@@ -159,6 +159,14 @@ namespace SCANsat.SCAN_PartModules
 			if (scanning)
 			{
 				animate(1, 1);
+
+				// Re-register the scanner with the controller. The knownVessels
+				// dictionary is not persistent across scene changes, so we must
+				// re-register whenever a vessel with an active scan is loaded.
+				if (state != StartState.Editor && sensorType > 0 && SCANcontroller.controller != null)
+				{
+					registerScanner();
+				}
 			}
 
 			powerIsProblem = false;
@@ -282,7 +290,7 @@ namespace SCANsat.SCAN_PartModules
 
 			if (fov != 0)
 			{
-				sb.Append(Localizer.Format("#autoLOC_SCANsat_FOV", fov.ToString("F1") + "°"));
+				sb.Append(Localizer.Format("#autoLOC_SCANsat_FOV", fov.ToString("F1") + "ï¿½"));
 			}
 
 			sb.AppendLine();
@@ -530,7 +538,7 @@ namespace SCANsat.SCAN_PartModules
 				{
 					scanInfoFOV.guiActive = true;
 					scanInfoPower.guiActive = true;
-					scanFOV = string.Format("{0}°", CurrentFOV(alt).ToString("N1"));
+					scanFOV = string.Format("{0}ï¿½", CurrentFOV(alt).ToString("N1"));
 
 					if (requireLight && SCAN_Settings_Config.Instance.DaylightCheck)
 					{
@@ -562,7 +570,7 @@ namespace SCANsat.SCAN_PartModules
 				{
 					scanInfoFOV.guiActive = true;
 					scanInfoPower.guiActive = true;
-					scanFOV = string.Format("{0}°", CurrentFOV(alt).ToString("N1"));
+					scanFOV = string.Format("{0}ï¿½", CurrentFOV(alt).ToString("N1"));
 					if (requireLight && SCAN_Settings_Config.Instance.DaylightCheck)
 					{
 						scanInfoDaylight.guiActive = true;
