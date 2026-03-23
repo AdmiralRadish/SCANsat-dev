@@ -1,0 +1,9 @@
+
+.vs/
+bin/
+obj/
+*.user
+GameData/SCANsat/Plugins/SCAN*
+GameData/SCANsat/PluginData/Settings.cfg
+GameData/SCANsat/Parts/@thumbs/
+Releases/
