@@ -1921,6 +1921,29 @@ namespace SCANsat.SCAN_Unity
 					});
 				}
 
+				if (body == FlightGlobals.GetHomeBody())
+				{
+					var launchSites = SCANcontroller.GetLaunchSites();
+
+					for (int j = 0; j < launchSites.Count; j++)
+					{
+						var site = launchSites[j];
+
+						Vector2 sitePos = MapPosition(site.Latitude, site.Longitude);
+
+						vessels.Add(new MapLabelInfo()
+						{
+							label = "<size=8>" + site.Name + "</size>",
+							image = SCAN_UI_Loader.FlagIcon,
+							pos = sitePos,
+							baseColor = palette.cb_orange,
+							flash = false,
+							width = 24,
+							show = sitePos.x >= 0 && sitePos.y >= 0
+						});
+					}
+				}
+
 				return vessels;
 			}
 		}

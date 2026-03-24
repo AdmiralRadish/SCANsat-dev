@@ -136,6 +136,64 @@ namespace SCANsat
 		/* List of resources currently loaded from resource addons */
 		private static List<string> loadedResources = new List<string>();
 
+		/* KSCSwitcher launch sites; loaded once from GameDatabase */
+		private static List<SCANlaunchSite> _launchSites;
+
+		public static List<SCANlaunchSite> GetLaunchSites()
+		{
+			if (_launchSites == null)
+				_launchSites = LoadLaunchSitesFromConfig();
+			return _launchSites;
+		}
+
+		private static List<SCANlaunchSite> LoadLaunchSitesFromConfig()
+		{
+			var sites = new List<SCANlaunchSite>();
+			ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("KSCSWITCHER");
+
+			for (int i = 0; i < nodes.Length; i++)
+			{
+				ConfigNode launchSitesNode = nodes[i].GetNode("LaunchSites");
+
+				if (launchSitesNode == null)
+					continue;
+
+				ConfigNode[] siteNodes = launchSitesNode.GetNodes("Site");
+
+				for (int j = 0; j < siteNodes.Length; j++)
+				{
+					ConfigNode site = siteNodes[j];
+
+					string name = site.GetValue("displayName");
+
+					if (string.IsNullOrEmpty(name))
+						name = site.GetValue("name");
+
+					if (string.IsNullOrEmpty(name))
+						continue;
+
+					ConfigNode pqsCity = site.GetNode("PQSCity");
+
+					if (pqsCity == null)
+						continue;
+
+					double lat, lon;
+
+					if (!double.TryParse(pqsCity.GetValue("latitude"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lat))
+						continue;
+
+					if (!double.TryParse(pqsCity.GetValue("longitude"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lon))
+						continue;
+
+					sites.Add(new SCANlaunchSite(name, lat, lon));
+				}
+			}
+
+			Log.Debug("Loaded " + sites.Count + " KSCSwitcher launch sites");
+
+			return sites;
+		}
+
 		/* Primary SCANsat vessel dictionary; loaded every time */
 		public DictionaryValueList<Guid, SCANvessel> knownVessels = new DictionaryValueList<Guid, SCANvessel>();
 
