@@ -782,16 +782,12 @@ namespace SCANsat.SCAN_Unity
 
 			mapOverlay = null;
 
-			if (immediate)
+			if (immediate && body != null && body.scaledBody != null)
 			{
-				try
-				{
-					body.scaledBody.GetComponentInChildren<ScaledSpaceFader>().r.material.SetTexture(Shader.PropertyToID("_ResourceMap"), null);
-				}
-				catch (Exception e)
-				{
-					SCANUtil.SCANlog("Error in destroying planetary map overlay:\n{0}", e);
-				}
+				var fader = body.scaledBody.GetComponentInChildren<ScaledSpaceFader>();
+
+				if (fader != null && fader.r != null && fader.r.material != null)
+					fader.r.material.SetTexture(Shader.PropertyToID("_ResourceMap"), null);
 			}
 		}
 
