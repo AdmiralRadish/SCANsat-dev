@@ -1323,6 +1323,14 @@ namespace SCANsat
 				return;
 			}
 
+			// Scope guard: avoid touching Kopernicus on-demand PQS for active-body
+			// visual map requests in flight, which can race terrain texture binding.
+			if (HighLogic.LoadedSceneIsFlight && (s == mapSource.BigMap || s == mapSource.ZoomMap) &&
+				FlightGlobals.currentMainBody != null && b == FlightGlobals.currentMainBody)
+			{
+				return;
+			}
+
 			if (b == null)
 			{
 				return;
@@ -1403,6 +1411,42 @@ namespace SCANsat
 			}
 
 			if (b == null)
+			{
+				return;
+			}
+
+			// Never unload PQS for the active vessel body. During FLIGHT->FLIGHT and
+			// other transition windows, scene/body state can briefly desync and allow
+			// an unload that causes transient terrain texture loss on the active body.
+			var activeBody = FlightGlobals.ActiveVessel != null ? FlightGlobals.ActiveVessel.mainBody : null;
+			if (activeBody != null && b == activeBody)
+			{
+				return;
+			}
+
+			// Extended guard: during a vessel switch, FlightGlobals.ActiveVessel may
+			// still point at the previous vessel (or be null) while the new vessel
+			// is being loaded at its body. An unload fired in that exact window
+			// tears down the target body's PQS textures and leaves terrain blank
+			// after the switch completes (observed 2026-04-23 09:45:30 Moon rover:
+			// unload fired 115ms BEFORE "Switched to vessel" log). Protect any body
+			// currently hosting a loaded vessel.
+			if (FlightGlobals.Vessels != null)
+			{
+				for (int i = 0; i < FlightGlobals.Vessels.Count; i++)
+				{
+					var v = FlightGlobals.Vessels[i];
+					if (v != null && v.loaded && v.mainBody == b)
+					{
+						return;
+					}
+				}
+			}
+
+			// Scope guard: avoid touching Kopernicus on-demand PQS for active-body
+			// visual map requests in flight, which can race terrain texture binding.
+			if (HighLogic.LoadedSceneIsFlight && (s == mapSource.BigMap || s == mapSource.ZoomMap) &&
+				FlightGlobals.currentMainBody != null && b == FlightGlobals.currentMainBody)
 			{
 				return;
 			}
