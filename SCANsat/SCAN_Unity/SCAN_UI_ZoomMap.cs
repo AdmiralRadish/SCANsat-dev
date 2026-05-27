@@ -2375,9 +2375,20 @@ namespace SCANsat.SCAN_Unity
 
 		public void RefreshMap()
 		{
-			resetMap();
+			if (spotmap == null || uiElement == null)
+			{
+				return;
+			}
 
-			uiElement.SetLegends(LegendToggle);
+			try
+			{
+				resetMap();
+				uiElement.SetLegends(LegendToggle);
+			}
+			catch (Exception e)
+			{
+				SCANUtil.SCANlog("Error refreshing zoom map\n{0}", e);
+			}
 		}
 
 		public void VesselSync()

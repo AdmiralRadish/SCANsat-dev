@@ -2554,9 +2554,20 @@ namespace SCANsat.SCAN_Unity
 
 		public void RefreshMap()
 		{
-			bigmap.resetMap(SCANcontroller.controller.bigMapResourceOn);
+			if (bigmap == null || uiElement == null)
+			{
+				return;
+			}
 
-			uiElement.SetLegends(LegendToggle);
+			try
+			{
+				bigmap.resetMap(SCANcontroller.controller.bigMapResourceOn);
+				uiElement.SetLegends(LegendToggle);
+			}
+			catch (Exception e)
+			{
+				SCANUtil.SCANlog("Error refreshing big map\n{0}", e);
+			}
 		}
 
 		public void OpenMainMap()

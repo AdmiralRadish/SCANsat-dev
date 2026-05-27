@@ -1415,6 +1415,15 @@ namespace SCANsat
 				return;
 			}
 
+			// Flight-time safety: if this body hosts any non-debris vessel (loaded or
+			// unloaded), do not unload its PQS. During vessel switches, ActiveVessel and
+			// currentMainBody can lag behind the destination body long enough for an
+			// unload call to slip through and blank terrain textures on arrival.
+			if (HighLogic.LoadedSceneIsFlight && BodyHasResidentVessel(b))
+			{
+				return;
+			}
+
 			// Never unload PQS for the active vessel body. During FLIGHT->FLIGHT and
 			// other transition windows, scene/body state can briefly desync and allow
 			// an unload that causes transient terrain texture loss on the active body.
@@ -1532,6 +1541,37 @@ namespace SCANsat
 			}
 
 			SCANkopernicus.UnloadPQS(b);
+		}
+
+		private static bool BodyHasResidentVessel(CelestialBody body)
+		{
+			if (body == null || FlightGlobals.Vessels == null)
+			{
+				return false;
+			}
+
+			for (int i = 0; i < FlightGlobals.Vessels.Count; i++)
+			{
+				var v = FlightGlobals.Vessels[i];
+				if (v == null || v.mainBody != body)
+				{
+					continue;
+				}
+
+				if (v.state == Vessel.State.DEAD)
+				{
+					continue;
+				}
+
+				if (v.vesselType == VesselType.Debris || v.vesselType == VesselType.SpaceObject)
+				{
+					continue;
+				}
+
+				return true;
+			}
+
+			return false;
 		}
 
 		internal void loadOnDemandScaledSpace(CelestialBody b, mapSource s)
@@ -1886,10 +1926,28 @@ namespace SCANsat
 
 			// If the cached texture was replaced, restart map rendering
 			if (refreshedBigMap && _bigMap != null)
-				_bigMap.RefreshMap();
+			{
+				try
+				{
+					_bigMap.RefreshMap();
+				}
+				catch (Exception e)
+				{
+					Log.Exception(e);
+				}
+			}
 
 			if ((refreshedZoomMap || (refreshedBigMap && zoomMapBodyScaledSpace == bigMapBodyScaledSpace)) && _zoomMap != null)
-				_zoomMap.RefreshMap();
+			{
+				try
+				{
+					_zoomMap.RefreshMap();
+				}
+				catch (Exception e)
+				{
+					Log.Exception(e);
+				}
+			}
 		}
 
 		private bool RefreshBodyTextureIfChanged(CelestialBody b)

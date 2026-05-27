@@ -25,7 +25,7 @@ KSP path is configured via the KSPBuildTools NuGet package. Create or edit a `Di
 
 Build properties are shared via:
 - `SCANsat.props` — Sets `BinariesOutputRelativePath = GameData/SCANsat/Plugins`
-- `SCANsat.version.props` — Version `21.1`, min KSP `1.12.3`
+- `SCANsat.version.props` — Version `22.0.0.0`, min KSP `1.12.3`
 
 ## Build
 

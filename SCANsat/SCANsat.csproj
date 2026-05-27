@@ -4,6 +4,9 @@
     <RootNamespace>SCANsat</RootNamespace>
     <AssemblyName>SCANsat</AssemblyName>
     <TargetFramework>net4.8</TargetFramework>
+    <Version>22.0.0.0</Version>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateKSPAssemblyAttribute>true</GenerateKSPAssemblyAttribute>
